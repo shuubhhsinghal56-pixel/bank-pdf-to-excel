@@ -481,6 +481,9 @@ export default function Index() {
             secureTextEntry
             autoCapitalize="none"
             autoCorrect={false}
+            returnKeyType="done"
+            onSubmitEditing={retryWithPassword}
+            blurOnSubmit={false}
           />
           <TouchableOpacity style={styles.primaryButton} onPress={retryWithPassword} activeOpacity={0.8}>
             <Ionicons name="key-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
