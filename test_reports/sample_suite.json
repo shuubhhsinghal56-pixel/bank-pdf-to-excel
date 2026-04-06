@@ -1,0 +1,462 @@
+{
+  "samples_dir": "samples/synthetic",
+  "case_count": 10,
+  "results": [
+    {
+      "file": "samples/synthetic/axis_balance_infer.txt",
+      "detected_format": {
+        "bank_name": "Axis Bank",
+        "columns": [
+          "Date",
+          "Narration",
+          "Reference",
+          "Debit",
+          "Credit",
+          "Balance"
+        ],
+        "date_format": "DD-MM-YYYY",
+        "amount_style": "separate",
+        "currency_symbol": "₹"
+      },
+      "summary": {
+        "bank_name": "Axis Bank",
+        "total_transactions": 6,
+        "total_debit": 20299.0,
+        "total_credit": 25011.0,
+        "net_flow": 4712.0,
+        "opening_balance": 52936.11,
+        "closing_balance": 57648.11,
+        "period_from": "05-01-2026",
+        "period_to": "13-01-2026",
+        "total_pages": 2,
+        "mismatched_rows": 0
+      },
+      "confidence": {
+        "score": 100,
+        "level": "high",
+        "review_recommended": false,
+        "reasons": [
+          "Running balances reconciled cleanly across parsed rows.",
+          "Parsing completed locally, which keeps token usage minimal."
+        ],
+        "pages_with_transactions": 2,
+        "skipped_pages": 0,
+        "locally_parsed_pages": 2,
+        "ai_fallback_pages": 0,
+        "token_strategy": "local_only"
+      },
+      "errors": [],
+      "export_path": "test_reports/exports/axis_balance_infer_export.xlsx"
+    },
+    {
+      "file": "samples/synthetic/bank_of_baroda.txt",
+      "detected_format": {
+        "bank_name": "Bank Of Baroda",
+        "columns": [
+          "Date",
+          "Narration",
+          "Reference",
+          "Debit",
+          "Credit",
+          "Balance"
+        ],
+        "date_format": "DD/MM/YYYY",
+        "amount_style": "separate",
+        "currency_symbol": "₹"
+      },
+      "summary": {
+        "bank_name": "Bank Of Baroda",
+        "total_transactions": 7,
+        "total_debit": 11298.5,
+        "total_credit": 23262.0,
+        "net_flow": 11963.5,
+        "opening_balance": 30000.0,
+        "closing_balance": 41963.5,
+        "period_from": "11-04-2026",
+        "period_to": "17-04-2026",
+        "total_pages": 2,
+        "mismatched_rows": 0
+      },
+      "confidence": {
+        "score": 100,
+        "level": "high",
+        "review_recommended": false,
+        "reasons": [
+          "Running balances reconciled cleanly across parsed rows.",
+          "Parsing completed locally, which keeps token usage minimal."
+        ],
+        "pages_with_transactions": 2,
+        "skipped_pages": 0,
+        "locally_parsed_pages": 2,
+        "ai_fallback_pages": 0,
+        "token_strategy": "local_only"
+      },
+      "errors": [],
+      "export_path": "test_reports/exports/bank_of_baroda_export.xlsx"
+    },
+    {
+      "file": "samples/synthetic/bank_of_maharashtra.txt",
+      "detected_format": {
+        "bank_name": "Bank Of Maharashtra",
+        "columns": [
+          "Date",
+          "Narration",
+          "Reference",
+          "Debit",
+          "Credit",
+          "Balance"
+        ],
+        "date_format": "DD/MM/YYYY",
+        "amount_style": "separate",
+        "currency_symbol": "₹"
+      },
+      "summary": {
+        "bank_name": "Bank Of Maharashtra",
+        "total_transactions": 7,
+        "total_debit": 12850.0,
+        "total_credit": 5106.75,
+        "net_flow": -7743.25,
+        "opening_balance": 18250.0,
+        "closing_balance": 10506.75,
+        "period_from": "01-05-2026",
+        "period_to": "07-05-2026",
+        "total_pages": 2,
+        "mismatched_rows": 0
+      },
+      "confidence": {
+        "score": 100,
+        "level": "high",
+        "review_recommended": false,
+        "reasons": [
+          "Running balances reconciled cleanly across parsed rows.",
+          "Parsing completed locally, which keeps token usage minimal."
+        ],
+        "pages_with_transactions": 2,
+        "skipped_pages": 0,
+        "locally_parsed_pages": 2,
+        "ai_fallback_pages": 0,
+        "token_strategy": "local_only"
+      },
+      "errors": [],
+      "export_path": "test_reports/exports/bank_of_maharashtra_export.xlsx"
+    },
+    {
+      "file": "samples/synthetic/federal_bank.txt",
+      "detected_format": {
+        "bank_name": "Federal Bank",
+        "columns": [
+          "Date",
+          "Narration",
+          "Debit",
+          "Credit",
+          "Balance"
+        ],
+        "date_format": "DD/MM/YYYY",
+        "amount_style": "separate",
+        "currency_symbol": "₹"
+      },
+      "summary": {
+        "bank_name": "Federal Bank",
+        "total_transactions": 7,
+        "total_debit": 2810.75,
+        "total_credit": 13509.8,
+        "net_flow": 10699.05,
+        "opening_balance": 8500.0,
+        "closing_balance": 19199.05,
+        "period_from": "10-01-2026",
+        "period_to": "16-01-2026",
+        "total_pages": 2,
+        "mismatched_rows": 0
+      },
+      "confidence": {
+        "score": 100,
+        "level": "high",
+        "review_recommended": false,
+        "reasons": [
+          "Running balances reconciled cleanly across parsed rows.",
+          "Parsing completed locally, which keeps token usage minimal."
+        ],
+        "pages_with_transactions": 2,
+        "skipped_pages": 0,
+        "locally_parsed_pages": 2,
+        "ai_fallback_pages": 0,
+        "token_strategy": "local_only"
+      },
+      "errors": [],
+      "export_path": "test_reports/exports/federal_bank_export.xlsx"
+    },
+    {
+      "file": "samples/synthetic/hdfc_wrapped.txt",
+      "detected_format": {
+        "bank_name": "HDFC Bank",
+        "columns": [
+          "Date",
+          "Narration",
+          "Reference",
+          "Debit",
+          "Credit",
+          "Balance"
+        ],
+        "date_format": "DD/MM/YYYY",
+        "amount_style": "separate",
+        "currency_symbol": "₹"
+      },
+      "summary": {
+        "bank_name": "HDFC Bank",
+        "total_transactions": 10,
+        "total_debit": 18659.0,
+        "total_credit": 95051.0,
+        "net_flow": 76392.0,
+        "opening_balance": 50000.0,
+        "closing_balance": 126392.0,
+        "period_from": "01-01-2024",
+        "period_to": "31-01-2024",
+        "total_pages": 2,
+        "mismatched_rows": 0
+      },
+      "confidence": {
+        "score": 100,
+        "level": "high",
+        "review_recommended": false,
+        "reasons": [
+          "Running balances reconciled cleanly across parsed rows.",
+          "Parsing completed locally, which keeps token usage minimal."
+        ],
+        "pages_with_transactions": 2,
+        "skipped_pages": 0,
+        "locally_parsed_pages": 2,
+        "ai_fallback_pages": 0,
+        "token_strategy": "local_only"
+      },
+      "errors": [],
+      "export_path": "test_reports/exports/hdfc_wrapped_export.xlsx"
+    },
+    {
+      "file": "samples/synthetic/icici_statement.txt",
+      "detected_format": {
+        "bank_name": "Icici Bank Limited",
+        "columns": [
+          "Date",
+          "Reference",
+          "Amount",
+          "Debit",
+          "Credit",
+          "Balance"
+        ],
+        "date_format": "DD/MM/YYYY",
+        "amount_style": "separate",
+        "currency_symbol": "₹"
+      },
+      "summary": {
+        "bank_name": "Icici Bank Limited",
+        "total_transactions": 9,
+        "total_debit": 18790.5,
+        "total_credit": 61021.35,
+        "net_flow": 42230.85,
+        "opening_balance": 25000.0,
+        "closing_balance": 67230.85,
+        "period_from": "01-02-2026",
+        "period_to": "08-02-2026",
+        "total_pages": 2,
+        "mismatched_rows": 0
+      },
+      "confidence": {
+        "score": 100,
+        "level": "high",
+        "review_recommended": false,
+        "reasons": [
+          "Running balances reconciled cleanly across parsed rows.",
+          "Parsing completed locally, which keeps token usage minimal."
+        ],
+        "pages_with_transactions": 2,
+        "skipped_pages": 0,
+        "locally_parsed_pages": 2,
+        "ai_fallback_pages": 0,
+        "token_strategy": "local_only"
+      },
+      "errors": [],
+      "export_path": "test_reports/exports/icici_statement_export.xlsx"
+    },
+    {
+      "file": "samples/synthetic/kotak_monthly.txt",
+      "detected_format": {
+        "bank_name": "Kotak Mahindra Bank",
+        "columns": [
+          "Date",
+          "Narration",
+          "Reference",
+          "Debit",
+          "Credit",
+          "Balance"
+        ],
+        "date_format": "DD/MM/YY",
+        "amount_style": "separate",
+        "currency_symbol": "₹"
+      },
+      "summary": {
+        "bank_name": "Kotak Mahindra Bank",
+        "total_transactions": 5,
+        "total_debit": 2820.5,
+        "total_credit": 5012.44,
+        "net_flow": 2191.94,
+        "opening_balance": 2000.82,
+        "closing_balance": 4192.76,
+        "period_from": "16-03-2026",
+        "period_to": "20-03-2026",
+        "total_pages": 3,
+        "mismatched_rows": 0
+      },
+      "confidence": {
+        "score": 92,
+        "level": "high",
+        "review_recommended": false,
+        "reasons": [
+          "Running balances reconciled cleanly across parsed rows.",
+          "Parsing completed locally, which keeps token usage minimal.",
+          "1 non-transaction page(s) were skipped automatically."
+        ],
+        "pages_with_transactions": 2,
+        "skipped_pages": 1,
+        "locally_parsed_pages": 2,
+        "ai_fallback_pages": 0,
+        "token_strategy": "local_only"
+      },
+      "errors": [],
+      "export_path": "test_reports/exports/kotak_monthly_export.xlsx"
+    },
+    {
+      "file": "samples/synthetic/pnb_statement.txt",
+      "detected_format": {
+        "bank_name": "Punjab National Bank",
+        "columns": [
+          "Date",
+          "Debit",
+          "Credit",
+          "Balance"
+        ],
+        "date_format": "DD/MM/YYYY",
+        "amount_style": "separate",
+        "currency_symbol": "₹"
+      },
+      "summary": {
+        "bank_name": "Punjab National Bank",
+        "total_transactions": 8,
+        "total_debit": 9899.0,
+        "total_credit": 32158.25,
+        "net_flow": 22259.25,
+        "opening_balance": 15000.0,
+        "closing_balance": 37259.25,
+        "period_from": "21-06-2026",
+        "period_to": "28-06-2026",
+        "total_pages": 2,
+        "mismatched_rows": 0
+      },
+      "confidence": {
+        "score": 100,
+        "level": "high",
+        "review_recommended": false,
+        "reasons": [
+          "Running balances reconciled cleanly across parsed rows.",
+          "Parsing completed locally, which keeps token usage minimal."
+        ],
+        "pages_with_transactions": 2,
+        "skipped_pages": 0,
+        "locally_parsed_pages": 2,
+        "ai_fallback_pages": 0,
+        "token_strategy": "local_only"
+      },
+      "errors": [],
+      "export_path": "test_reports/exports/pnb_statement_export.xlsx"
+    },
+    {
+      "file": "samples/synthetic/sbi_classic.txt",
+      "detected_format": {
+        "bank_name": "State Bank Of India",
+        "columns": [
+          "Date",
+          "Narration",
+          "Reference",
+          "Debit",
+          "Credit",
+          "Balance"
+        ],
+        "date_format": "DD/MM/YYYY",
+        "amount_style": "separate",
+        "currency_symbol": "₹"
+      },
+      "summary": {
+        "bank_name": "State Bank Of India",
+        "total_transactions": 8,
+        "total_debit": 7404.0,
+        "total_credit": 30511.0,
+        "net_flow": 23107.0,
+        "opening_balance": 12500.0,
+        "closing_balance": 35607.0,
+        "period_from": "01-03-2026",
+        "period_to": "08-03-2026",
+        "total_pages": 2,
+        "mismatched_rows": 0
+      },
+      "confidence": {
+        "score": 100,
+        "level": "high",
+        "review_recommended": false,
+        "reasons": [
+          "Running balances reconciled cleanly across parsed rows.",
+          "Parsing completed locally, which keeps token usage minimal."
+        ],
+        "pages_with_transactions": 2,
+        "skipped_pages": 0,
+        "locally_parsed_pages": 2,
+        "ai_fallback_pages": 0,
+        "token_strategy": "local_only"
+      },
+      "errors": [],
+      "export_path": "test_reports/exports/sbi_classic_export.xlsx"
+    },
+    {
+      "file": "samples/synthetic/union_combined.txt",
+      "detected_format": {
+        "bank_name": "Union Bank Of India",
+        "columns": [
+          "Date",
+          "Narration",
+          "Amount",
+          "Balance"
+        ],
+        "date_format": "DD/MM/YYYY",
+        "amount_style": "combined",
+        "currency_symbol": "₹"
+      },
+      "summary": {
+        "bank_name": "Union Bank Of India",
+        "total_transactions": 6,
+        "total_debit": 5670.5,
+        "total_credit": 35025.0,
+        "net_flow": 29354.5,
+        "opening_balance": 12500.0,
+        "closing_balance": 41854.5,
+        "period_from": "01-04-2025",
+        "period_to": "06-04-2025",
+        "total_pages": 2,
+        "mismatched_rows": 0
+      },
+      "confidence": {
+        "score": 100,
+        "level": "high",
+        "review_recommended": false,
+        "reasons": [
+          "Running balances reconciled cleanly across parsed rows.",
+          "Parsing completed locally, which keeps token usage minimal."
+        ],
+        "pages_with_transactions": 2,
+        "skipped_pages": 0,
+        "locally_parsed_pages": 2,
+        "ai_fallback_pages": 0,
+        "token_strategy": "local_only"
+      },
+      "errors": [],
+      "export_path": "test_reports/exports/union_combined_export.xlsx"
+    }
+  ]
+}

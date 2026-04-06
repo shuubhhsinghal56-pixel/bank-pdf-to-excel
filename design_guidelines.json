@@ -1,0 +1,174 @@
+{
+  "project_context": {
+    "app_type": "react_native_expo",
+    "domain": "Finance, Personal Finance, Utility",
+    "theme": "LIGHT",
+    "archetype": "Archetype 4 (Swiss & High-Contrast) adapted for Finance",
+    "core_aesthetic": "Aggressive white space, decluttered layouts, typography-driven, focus on primary values, high-contrast, navy blue accents, color-coded financial data."
+  },
+  "color_palette": {
+    "background": {
+      "primary": "#FFFFFF",
+      "secondary": "#F8F9FA",
+      "tertiary": "#F3F4F6"
+    },
+    "brand": {
+      "primary": "#0B2447",
+      "primary_light": "#19376D",
+      "accent": "#5885AF"
+    },
+    "feedback": {
+      "credit_green": "#059669",
+      "credit_bg": "#ECFDF5",
+      "debit_red": "#DC2626",
+      "debit_bg": "#FEF2F2",
+      "mismatch_yellow": "#D97706",
+      "mismatch_bg": "#FFFBEB"
+    },
+    "text": {
+      "primary": "#111827",
+      "secondary": "#6B7280",
+      "tertiary": "#9CA3AF",
+      "inverse": "#FFFFFF"
+    },
+    "border": {
+      "default": "#E5E7EB",
+      "focus": "#19376D"
+    }
+  },
+  "typography": {
+    "font_family": {
+      "heading": "CabinetGrotesk-Bold, sans-serif",
+      "body": "Manrope-Regular, sans-serif",
+      "body_medium": "Manrope-Medium, sans-serif",
+      "body_bold": "Manrope-Bold, sans-serif"
+    },
+    "sizes": {
+      "h1": { "fontSize": 32, "lineHeight": 40, "letterSpacing": -0.5 },
+      "h2": { "fontSize": 24, "lineHeight": 32, "letterSpacing": -0.3 },
+      "h3": { "fontSize": 20, "lineHeight": 28, "letterSpacing": 0 },
+      "body_large": { "fontSize": 18, "lineHeight": 26, "letterSpacing": 0 },
+      "body": { "fontSize": 16, "lineHeight": 24, "letterSpacing": 0 },
+      "small": { "fontSize": 14, "lineHeight": 20, "letterSpacing": 0.2 },
+      "micro": { "fontSize": 12, "lineHeight": 16, "letterSpacing": 0.5 }
+    }
+  },
+  "spacing_and_layout": {
+    "scale": {
+      "xs": 4,
+      "sm": 8,
+      "md": 16,
+      "lg": 24,
+      "xl": 32,
+      "2xl": 48,
+      "3xl": 64
+    },
+    "border_radius": {
+      "sm": 8,
+      "md": 12,
+      "lg": 16,
+      "xl": 24,
+      "pill": 9999
+    },
+    "shadows": {
+      "sm": {
+        "shadowColor": "#000",
+        "shadowOffset": { "width": 0, "height": 1 },
+        "shadowOpacity": 0.05,
+        "shadowRadius": 2,
+        "elevation": 2
+      },
+      "md": {
+        "shadowColor": "#000",
+        "shadowOffset": { "width": 0, "height": 4 },
+        "shadowOpacity": 0.08,
+        "shadowRadius": 12,
+        "elevation": 4
+      }
+    },
+    "container": {
+      "paddingHorizontal": 24,
+      "paddingVertical": 32,
+      "backgroundColor": "#FFFFFF",
+      "flex": 1
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": {
+        "backgroundColor": "#0B2447",
+        "borderRadius": 12,
+        "paddingVertical": 16,
+        "paddingHorizontal": 24,
+        "alignItems": "center",
+        "justifyContent": "center"
+      },
+      "primary_text": {
+        "color": "#FFFFFF",
+        "fontSize": 16,
+        "fontFamily": "Manrope-Bold"
+      },
+      "secondary": {
+        "backgroundColor": "#F3F4F6",
+        "borderRadius": 12,
+        "paddingVertical": 16,
+        "paddingHorizontal": 24,
+        "alignItems": "center",
+        "justifyContent": "center",
+        "borderWidth": 1,
+        "borderColor": "#E5E7EB"
+      },
+      "secondary_text": {
+        "color": "#111827",
+        "fontSize": 16,
+        "fontFamily": "Manrope-Bold"
+      }
+    },
+    "cards": {
+      "summary_bento": {
+        "backgroundColor": "#F8F9FA",
+        "borderRadius": 16,
+        "padding": 16,
+        "borderWidth": 1,
+        "borderColor": "#E5E7EB"
+      }
+    },
+    "upload_zone": {
+      "borderStyle": "dashed",
+      "borderWidth": 2,
+      "borderColor": "#5885AF",
+      "borderRadius": 24,
+      "padding": 32,
+      "alignItems": "center",
+      "justifyContent": "center",
+      "backgroundColor": "#F8F9FA"
+    },
+    "transaction_row": {
+      "flexDirection": "row",
+      "justifyContent": "space-between",
+      "paddingVertical": 16,
+      "borderBottomWidth": 1,
+      "borderBottomColor": "#E5E7EB",
+      "alignItems": "center"
+    }
+  },
+  "image_urls": {
+    "upload_illustration": {
+      "url": "https://static.prod-images.emergentagent.com/jobs/d69beafc-693f-4acb-ae99-6911a8a1969c/images/29bbf961c0ec2ee8f91b56569716b2552da857edb72342e62c52f04d70867284.png",
+      "description": "Minimalist 3D abstract illustration for the PDF upload screen, representing clean document data extraction.",
+      "category": "hero_illustration"
+    }
+  },
+  "instructions_to_main_agent": [
+    "CRITICAL: This is a React Native Expo project. DO NOT USE HTML elements (div, span, p) or Tailwind CSS classes. Use React Native components (View, Text, TouchableOpacity, ScrollView, FlatList, Image) and StyleSheet.create().",
+    "Use expo-router for navigation between screens (Upload -> Format Detection -> Preview -> Summary/Download).",
+    "All interactive and key informational elements MUST include a 'testID' attribute (e.g., testID='upload-button'). Do not use 'data-testid' as it is not valid in React Native.",
+    "Implement the UI using a mobile-first, thumb-friendly approach. Primary actions should be at the bottom of the screen.",
+    "For the Transaction Preview Table, use a FlatList. It must be paginated (50 rows/page). Color-code amounts: Red text with light red background for debits, Green text with light green background for credits, Yellow/Amber for mismatches.",
+    "For the Summary Statistics Dashboard, use a Bento-grid style layout with flexbox (`flexWrap: 'wrap'`, `flexBasis: '48%'` for side-by-side metrics).",
+    "Since memory-only processing is required, mock the PDF extraction and AI detection logic heavily, but structure the state to hold the 'extracted' JSON data in memory via React Context or Zustand.",
+    "To download Excel in React Native, use a library like `xlsx` and `expo-file-system` + `expo-sharing` to allow the user to save/share the generated file.",
+    "Use @expo/vector-icons (e.g., Ionicons or Feather) for all icons.",
+    "Follow the generous spacing guidelines. Avoid cluttered screens. Emphasize the data."
+  ]
+}
