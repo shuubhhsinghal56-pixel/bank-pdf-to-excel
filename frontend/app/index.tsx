@@ -69,6 +69,12 @@ interface ParseConfidence {
   token_strategy: string;
 }
 
+interface RawTableData {
+  headers: string[];
+  rows: string[][];
+  table_count: number;
+}
+
 type Step = 'upload' | 'confirm' | 'processing' | 'results';
 
 // ─── Format Indian Number ──────────────────────────────────────────
@@ -112,6 +118,7 @@ export default function Index() {
   const [fullText, setFullText] = useState('');
   const [totalPages, setTotalPages] = useState(0);
   const [editBankName, setEditBankName] = useState('');
+  const [rawTableData, setRawTableData] = useState<RawTableData | null>(null);
 
   // Results state
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -193,6 +200,7 @@ export default function Index() {
       setEditBankName(data.detected_format.bank_name);
       setFullText(data.full_text);
       setTotalPages(data.total_pages);
+      setRawTableData(data.raw_table || null);
       setStep('confirm');
     } catch (e: any) {
       const message = e.message || 'Upload failed. Please try again.';
@@ -337,6 +345,63 @@ export default function Index() {
     }
   };
 
+  const downloadRawTableExcel = async () => {
+    if (!rawTableData || rawTableData.rows.length === 0) {
+      setError('No raw table data was found in this PDF.');
+      return;
+    }
+
+    setLoading(true);
+    setLoadingMsg('Generating raw table Excel...');
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/download-raw-table-excel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          headers: rawTableData.headers,
+          rows: rawTableData.rows,
+          sheet_name: 'Raw Table',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Raw table Excel generation failed');
+      }
+
+      const blob = await response.blob();
+
+      if (Platform.OS === 'web') {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `raw_table_${selectedFile.replace(/\.pdf$/i, '') || 'export'}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const base64 = (reader.result as string).split(',')[1];
+          const fileUri = FileSystem.cacheDirectory + `raw_table_${Date.now()}.xlsx`;
+          await FileSystem.writeAsStringAsync(fileUri, base64, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          await Sharing.shareAsync(fileUri, {
+            mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            dialogTitle: 'Save Raw Table Excel',
+          });
+        };
+        reader.readAsDataURL(blob);
+      }
+    } catch (e: any) {
+      setError('Failed to download raw table Excel: ' + e.message);
+    } finally {
+      setLoading(false);
+      setLoadingMsg('');
+    }
+  };
+
   // ─── Reset ───────────────────────────────────────────────────────
   const resetApp = () => {
     setStep('upload');
@@ -348,6 +413,7 @@ export default function Index() {
     setFullText('');
     setTotalPages(0);
     setEditBankName('');
+    setRawTableData(null);
     setTransactions([]);
     setSummary(null);
     setConfidence(null);
@@ -496,6 +562,17 @@ export default function Index() {
               {totalPages} pages
             </Text>
           </View>
+          {rawTableData && rawTableData.rows.length > 0 && (
+            <>
+              <View style={styles.formatDivider} />
+              <View style={styles.formatRow}>
+                <Text style={styles.formatLabel}>Raw Table</Text>
+                <Text style={styles.formatValue}>
+                  {rawTableData.rows.length} rows from {rawTableData.table_count} detected table(s)
+                </Text>
+              </View>
+            </>
+          )}
         </View>
       )}
 
@@ -508,6 +585,17 @@ export default function Index() {
         <Ionicons name="sparkles" size={20} color="#FFF" style={{ marginRight: 8 }} />
         <Text style={styles.primaryButtonText}>Parse Transactions</Text>
       </TouchableOpacity>
+
+      {rawTableData && rawTableData.rows.length > 0 && (
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={downloadRawTableExcel}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="grid-outline" size={20} color="#0B2447" style={{ marginRight: 8 }} />
+          <Text style={styles.secondaryButtonText}>Export Raw Table</Text>
+        </TouchableOpacity>
+      )}
     </ScrollView>
   );
 
@@ -545,6 +633,16 @@ export default function Index() {
           <Ionicons name="download-outline" size={18} color="#FFF" />
           <Text style={styles.downloadBtnText}>Excel</Text>
         </TouchableOpacity>
+        {rawTableData && rawTableData.rows.length > 0 && (
+          <TouchableOpacity
+            style={styles.secondaryHeaderBtn}
+            onPress={downloadRawTableExcel}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="grid-outline" size={18} color="#0B2447" />
+            <Text style={styles.secondaryHeaderBtnText}>Raw Table</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Tabs */}
@@ -1174,6 +1272,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+  secondaryButton: {
+    flexDirection: 'row',
+    backgroundColor: '#E0ECF7',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+  },
+  secondaryButtonText: {
+    color: '#0B2447',
+    fontSize: 16,
+    fontWeight: '700',
+  },
 
   // ─── Processing ──────────────────
   processingContainer: {
@@ -1231,6 +1343,20 @@ const styles = StyleSheet.create({
   },
   downloadBtnText: {
     color: '#FFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  secondaryHeaderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E0ECF7',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    gap: 6,
+  },
+  secondaryHeaderBtnText: {
+    color: '#0B2447',
     fontSize: 14,
     fontWeight: '700',
   },

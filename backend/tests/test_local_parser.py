@@ -150,3 +150,35 @@ def test_build_parse_confidence_prefers_local_zero_mismatch_runs():
     assert confidence.level == "high"
     assert confidence.review_recommended is False
     assert confidence.token_strategy == "local_only"
+
+
+def test_parse_transactions_locally_drops_page_header_and_footer_text():
+    noisy_text = """--- PAGE 1 ---
+Customer Name: Test User
+Branch Address: MG Road Main Branch
+Date Narration Chq/Ref No Value Date Withdrawal Amt Deposit Amt Closing Balance
+01/01/2024 UPI/SHOPPING ORDER UPI123456 01/01/2024 250.00 9,750.00
+02/01/2024 IMPS/FROM CLIENT IMPS654321 02/01/2024 5,000.00 14,750.00
+Generated on: 03/01/2024 10:30 AM
+For any clarification contact customer care
+"""
+
+    transactions = parse_transactions_locally(noisy_text, "separate")
+
+    assert len(transactions) == 2
+    assert transactions[0].narration == "UPI/SHOPPING ORDER UPI123456"
+    assert transactions[-1].narration == "IMPS/FROM CLIENT IMPS654321"
+
+
+def test_parse_transactions_locally_strips_footer_fragments_from_last_entry():
+    noisy_text = """--- PAGE 1 ---
+Date Narration Chq/Ref No Value Date Withdrawal Amt Deposit Amt Closing Balance
+01/01/2024 UPI/SHOPPING ORDER UPI123456 01/01/2024 250.00 9,750.00
+02/01/2024 IMPS/FROM CLIENT IMPS654321 02/01/2024 5,000.00 14,750.00
+Generated on: 03/01/2024 10:30 AM
+Contents of this statement will be considered correct if no error is reported.
+"""
+
+    transactions = parse_transactions_locally(noisy_text, "separate")
+
+    assert transactions[-1].narration == "IMPS/FROM CLIENT IMPS654321"

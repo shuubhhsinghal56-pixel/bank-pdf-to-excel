@@ -117,6 +117,12 @@ class ExcelRequest(BaseModel):
     summary: dict
 
 
+class RawTableExportRequest(BaseModel):
+    headers: List[str]
+    rows: List[List[str]]
+    sheet_name: str = "Raw Table"
+
+
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 def parse_indian_number(s: str) -> Optional[float]:
@@ -174,6 +180,134 @@ def format_indian_number(num: float) -> str:
             s = s[:-2]
     sign = '-' if is_negative else ''
     return f"{sign}₹{result}{decimal_str}"
+
+
+def normalize_table_cell(value: Optional[str]) -> str:
+    return normalize_whitespace("" if value is None else str(value))
+
+
+def is_likely_header_row(row: List[str]) -> bool:
+    non_empty = [cell for cell in row if cell]
+    if len(non_empty) < 2:
+        return False
+    keyword_hits = sum(
+        1
+        for cell in non_empty
+        if re.search(
+            r'\b(date|narration|description|particulars?|remarks?|ref|cheque|debit|credit|withdrawal|deposit|balance|value date|transaction)\b',
+            cell,
+            flags=re.IGNORECASE,
+        )
+    )
+    alpha_cells = sum(1 for cell in non_empty if re.search(r'[A-Za-z]', cell))
+    mostly_number_cells = sum(1 for cell in non_empty if re.fullmatch(r'[\d,.\-()/ ]+', cell))
+    return (
+        keyword_hits >= 2
+        and alpha_cells >= max(2, len(non_empty) // 2)
+        and mostly_number_cells < len(non_empty)
+    )
+
+
+def is_probable_table_metadata_row(row: List[str]) -> bool:
+    non_empty = [cell for cell in row if cell]
+    if not non_empty:
+        return True
+
+    row_text = normalize_whitespace(" ".join(non_empty))
+    if is_probable_metadata_line(row_text):
+        return True
+
+    metadata_fragments = (
+        "savings account transactions",
+        "statement of account",
+        "statement details",
+        "important information",
+        "generated on",
+        "this statement",
+        "customer care",
+        "registered office",
+        "closing balance includes",
+    )
+    lower_text = row_text.lower()
+    if any(fragment in lower_text for fragment in metadata_fragments):
+        return True
+
+    if len(non_empty) == 1 and len(row_text) < 80 and not re.search(r'\d', row_text):
+        return True
+
+    return False
+
+
+def find_header_row_index(rows: List[List[str]]) -> Optional[int]:
+    for idx, row in enumerate(rows[:5]):
+        if is_likely_header_row(row):
+            return idx
+    return None
+
+
+def score_extracted_table(rows: List[List[str]]) -> int:
+    if not rows:
+        return -1
+    header_index = find_header_row_index(rows)
+    data_rows = [row for row in rows[(header_index + 1 if header_index is not None else 0):] if not is_probable_table_metadata_row(row)]
+    non_empty_cells = sum(sum(1 for cell in row if cell) for row in data_rows)
+    score = len(data_rows) * 20 + non_empty_cells
+    if header_index is not None:
+        score += 50
+    return score
+
+
+def extract_combined_raw_table(pdf: pdfplumber.PDF) -> Tuple[List[str], List[List[str]], int]:
+    combined_headers: List[str] = []
+    combined_rows: List[List[str]] = []
+    table_count = 0
+
+    for page in pdf.pages:
+        page_tables = page.extract_tables() or []
+        candidate_tables: List[List[List[str]]] = []
+        for table in page_tables:
+            normalized_rows = [
+                [normalize_table_cell(cell) for cell in row]
+                for row in table
+                if row and any(normalize_table_cell(cell) for cell in row)
+            ]
+            if not normalized_rows:
+                continue
+            width = max(len(row) for row in normalized_rows)
+            normalized_rows = [row + [""] * (width - len(row)) for row in normalized_rows]
+            candidate_tables.append(normalized_rows)
+
+        if not candidate_tables:
+            continue
+
+        table_count += len(candidate_tables)
+        best_table = max(candidate_tables, key=score_extracted_table)
+        header_index = find_header_row_index(best_table)
+        start_index = 0
+
+        if header_index is not None:
+            header_row = best_table[header_index]
+            if not combined_headers:
+                combined_headers = header_row
+            elif [cell.lower() for cell in header_row] != [cell.lower() for cell in combined_headers]:
+                combined_rows.append(header_row)
+            start_index = header_index + 1
+
+        for row in best_table[start_index:]:
+            if is_probable_table_metadata_row(row):
+                continue
+            if combined_headers and [cell.lower() for cell in row[:len(combined_headers)]] == [cell.lower() for cell in combined_headers]:
+                continue
+            if combined_headers and len(row) < len(combined_headers):
+                row = row + [""] * (len(combined_headers) - len(row))
+            combined_rows.append(row)
+
+    if not combined_headers and combined_rows:
+        width = max(len(row) for row in combined_rows)
+        combined_headers = [f"Column {index}" for index in range(1, width + 1)]
+        combined_rows = [row + [""] * (width - len(row)) for row in combined_rows]
+
+    return combined_headers, combined_rows, table_count
 
 
 def extract_json_from_response(text: str) -> dict:
@@ -393,6 +527,73 @@ def split_text_into_pages(full_text: str) -> List[Tuple[int, str]]:
     return [(page_no, text) for page_no, text in pages if text]
 
 
+def is_transaction_anchor_line(line: str) -> bool:
+    cleaned = normalize_whitespace(line)
+    if not cleaned:
+        return False
+    if LINE_START_DATE_RE.match(cleaned):
+        return True
+    return extract_opening_balance(cleaned) is not None
+
+
+def is_probable_metadata_line(line: str) -> bool:
+    upper = normalize_whitespace(line).upper()
+    if not upper:
+        return True
+    if is_non_transaction_line(line):
+        return True
+
+    metadata_tokens = (
+        "PAGE ",
+        "PAGE NO",
+        "PAGE NO.",
+        "GENERATED ON",
+        "ACCOUNT NO",
+        "CUSTOMER ID",
+        "CUST ID",
+        "BRANCH",
+        "ADDRESS",
+        "EMAIL",
+        "PHONE",
+        "MOBILE",
+        "IFSC",
+        "MICR",
+        "GST",
+        "REGISTERED OFFICE",
+        "THIS STATEMENT",
+        "SYSTEM GENERATED",
+        "VALID SUBJECT TO",
+        "FOR ANY CLARIFICATION",
+        "CONTACT",
+        "WWW.",
+        "HTTP://",
+        "HTTPS://",
+    )
+    if any(token in upper for token in metadata_tokens):
+        return True
+
+    if ":" in upper and not DATE_TOKEN_RE.search(upper) and len(AMOUNT_RE.findall(upper)) == 0:
+        return True
+
+    return False
+
+
+def is_probable_continuation_line(line: str) -> bool:
+    cleaned = normalize_whitespace(line)
+    upper = cleaned.upper()
+    if not cleaned:
+        return False
+    if is_transaction_anchor_line(cleaned):
+        return False
+    if is_probable_metadata_line(cleaned):
+        return False
+    if DATE_TOKEN_RE.search(cleaned) and len(AMOUNT_RE.findall(cleaned)) >= 1:
+        return False
+    if len(cleaned) > 140:
+        return False
+    return True
+
+
 def sanitize_page_text(page_text: str) -> str:
     lines = [line.rstrip() for line in page_text.splitlines()]
     if not lines:
@@ -400,7 +601,7 @@ def sanitize_page_text(page_text: str) -> str:
 
     first_date_index: Optional[int] = None
     for idx, line in enumerate(lines):
-        if LINE_START_DATE_RE.match(normalize_whitespace(line)):
+        if is_transaction_anchor_line(line):
             first_date_index = idx
             break
 
@@ -415,7 +616,12 @@ def sanitize_page_text(page_text: str) -> str:
         ):
             header_index = idx
 
+    if first_date_index is not None:
+        while first_date_index > 0 and is_probable_metadata_line(lines[first_date_index - 1]):
+            first_date_index -= 1
     if header_index is not None and first_date_index is not None and first_date_index > header_index:
+        lines = lines[first_date_index:]
+    elif first_date_index is not None and first_date_index > 0:
         lines = lines[first_date_index:]
 
     footer_markers = (
@@ -435,6 +641,9 @@ def sanitize_page_text(page_text: str) -> str:
         if upper == "HDFCBANKLIMITED" and trimmed_lines:
             break
         trimmed_lines.append(line)
+
+    while trimmed_lines and is_probable_metadata_line(trimmed_lines[-1]):
+        trimmed_lines.pop()
 
     return "\n".join(trimmed_lines).strip()
 
@@ -550,6 +759,54 @@ def extract_particulars_and_amounts(text: str, amount_style: str) -> Tuple[str, 
     particulars = raw[:amount_matches[0].start()].strip()
     amounts = [match.group(0) for match in amount_matches]
     return particulars, amounts
+
+
+def clean_narration_text(text: str) -> str:
+    cleaned = normalize_whitespace(text)
+    if not cleaned:
+        return ""
+
+    removable_patterns = [
+        r'\bPage\s*No\.?:?\s*\d+\b.*$',
+        r'\bGenerated on:.*$',
+        r'\bThis statement.*$',
+        r'\bFor any clarification.*$',
+        r'\bCustomer Name:.*$',
+        r'\bBranch Address:.*$',
+        r'\bRegistered Office.*$',
+        r'\bState account branch GSTN:.*$',
+        r'\bContents of this statement.*$',
+        r'\bHDFC Bank GSTIN.*$',
+        r'\*Closing balance includes.*$',
+    ]
+    for pattern in removable_patterns:
+        cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE).strip()
+
+    cleaned = re.sub(r'\s{2,}', ' ', cleaned).strip(' -|')
+    return normalize_whitespace(cleaned)
+
+
+def coerce_raw_excel_cell(value: str) -> Tuple[object, Optional[str]]:
+    cleaned = normalize_whitespace(value)
+    if not cleaned:
+        return "", None
+
+    normalized_date = normalize_date(cleaned)
+    if normalized_date != cleaned and re.fullmatch(r"\d{2}-\d{2}-\d{4}", normalized_date):
+        try:
+            dt = datetime.strptime(normalized_date, "%d-%m-%Y")
+            return dt, "DD-MM-YYYY"
+        except ValueError:
+            pass
+
+    number_value = parse_indian_number(cleaned)
+    if number_value is not None:
+        has_alpha = bool(re.search(r"[A-Za-z]", cleaned))
+        digit_count = sum(ch.isdigit() for ch in cleaned)
+        if not has_alpha and digit_count >= 1:
+            return number_value, "#,##0.00"
+
+    return cleaned, None
 
 
 def evaluate_transaction_quality(transactions: List[Transaction]) -> Tuple[int, int]:
@@ -730,7 +987,7 @@ def build_transaction_from_parts(
     page_number: int,
     previous_balance: Optional[float] = None,
 ) -> Optional[Transaction]:
-    particulars = DATE_TOKEN_RE.sub("", normalize_whitespace(particulars)).strip()
+    particulars = clean_narration_text(DATE_TOKEN_RE.sub("", normalize_whitespace(particulars)).strip())
     debit, credit, balance = split_amounts(
         amount_matches,
         amount_style,
@@ -765,7 +1022,7 @@ def parse_transaction_line(
     particulars, amounts = extract_particulars_and_amounts(remainder, amount_style)
     if not amounts:
         return None
-    particulars = DATE_TOKEN_RE.sub("", particulars).strip()
+    particulars = clean_narration_text(DATE_TOKEN_RE.sub("", particulars).strip())
 
     debit, credit, balance = split_amounts(amounts, amount_style, previous_balance=previous_balance)
     if balance is None:
@@ -893,9 +1150,9 @@ def parse_transactions_blockwise(full_text: str, amount_style: str) -> List[Tran
             pending_prefix_lines = []
             continue
 
-        if current_block:
+        if current_block and is_probable_continuation_line(line):
             current_block.append(line)
-        else:
+        elif not current_block and not is_probable_metadata_line(line):
             pending_prefix_lines.append(line)
 
     finalize_block()
@@ -966,9 +1223,16 @@ def parse_transactions_linewise(full_text: str, amount_style: str) -> List[Trans
             first_transaction_seen_on_page = True
             continue
 
-        if first_transaction_seen_on_page and transactions and transactions[-1].page_number == current_page:
-            transactions[-1].narration = normalize_whitespace(f"{transactions[-1].narration} {line}")
-        else:
+        if (
+            first_transaction_seen_on_page
+            and transactions
+            and transactions[-1].page_number == current_page
+            and is_probable_continuation_line(line)
+        ):
+            transactions[-1].narration = clean_narration_text(
+                f"{transactions[-1].narration} {line}"
+            )
+        elif not is_probable_metadata_line(line):
             pending_prefix_lines.append(line)
 
     return transactions
@@ -1099,8 +1363,9 @@ async def upload_pdf(file: UploadFile = File(...), password: Optional[str] = For
         if total_pages == 0:
             raise HTTPException(status_code=400, detail="The PDF has no pages.")
 
-        # Extract text from all pages
+        # Extract text and raw tables from all pages
         all_text = []
+        raw_table_headers, raw_table_rows, raw_table_count = extract_combined_raw_table(pdf)
         for i, page in enumerate(pdf.pages):
             text = page.extract_text()
             if text and text.strip():
@@ -1159,7 +1424,12 @@ Bank statement text:
             "preview_text": preview_text[:3000],
             "total_pages": total_pages,
             "full_text": encoded_text,
-            "text_pages_count": len(all_text)
+            "text_pages_count": len(all_text),
+            "raw_table": {
+                "headers": raw_table_headers,
+                "rows": raw_table_rows,
+                "table_count": raw_table_count,
+            },
         }
 
     except HTTPException:
@@ -1436,6 +1706,73 @@ async def download_excel(data: ExcelRequest):
     except Exception as e:
         logger.error(f"Excel generation error: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error generating Excel: {str(e)}")
+
+
+@api_router.post("/download-raw-table-excel")
+async def download_raw_table_excel(data: RawTableExportRequest):
+    """Generate Excel file from raw extracted PDF tables."""
+    try:
+        headers = data.headers or []
+        rows = data.rows or []
+        width = max(len(headers), max((len(row) for row in rows), default=0))
+        if width == 0:
+            raise HTTPException(status_code=400, detail="No raw table data available to export.")
+
+        if not headers:
+            headers = [f"Column {index}" for index in range(1, width + 1)]
+        elif len(headers) < width:
+            headers = headers + [f"Column {index}" for index in range(len(headers) + 1, width + 1)]
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = (data.sheet_name or "Raw Table")[:31]
+
+        header_fill = PatternFill(start_color="0B2447", end_color="0B2447", fill_type="solid")
+        header_font = Font(color="FFFFFF", bold=True, size=11)
+        thin_border = Border(
+            left=Side(style='thin', color='E5E7EB'),
+            right=Side(style='thin', color='E5E7EB'),
+            top=Side(style='thin', color='E5E7EB'),
+            bottom=Side(style='thin', color='E5E7EB')
+        )
+
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col, value=header)
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+            cell.border = thin_border
+
+        for row_index, row in enumerate(rows, start=2):
+            padded_row = row + [""] * (width - len(row))
+            for col_index, value in enumerate(padded_row, start=1):
+                cell_value, number_format = coerce_raw_excel_cell(value)
+                cell = ws.cell(row=row_index, column=col_index, value=cell_value)
+                if number_format:
+                    cell.number_format = number_format
+                cell.border = thin_border
+
+        for index in range(1, width + 1):
+            ws.column_dimensions[get_column_letter(index)].width = 24
+
+        ws.freeze_panes = "A2"
+        ws.auto_filter.ref = f"A1:{get_column_letter(width)}{len(rows) + 1}"
+
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        filename = f"raw_table_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.xlsx"
+        return StreamingResponse(
+            output,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Raw table Excel generation error: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error generating raw table Excel: {str(e)}")
 
 
 # Include router
